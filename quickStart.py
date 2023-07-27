@@ -11,19 +11,4 @@ class HelloWorld(Resource):
 api.add_resource(HelloWorld, '/')
 
 if __name__ == '__main__':
-    #app.run(debug=True)
-
-
-
-    users = {
-        "user1": {"user": "Cameron James Scarpati"},
-        "user2": {"user": "Charlie Ann Page"},
-    }
-    threads = {
-        "thread1": {"thread": "Hello World!", "user": "Cameron James Scarpati"},
-        "thread2": {"thread": "Goodbye World!", "user": "Charlie Ann Page"}
-    }
-
-    user = "Cameron James Scarpati"
-
-    print(threads.values())
+    app.run(debug=True)
