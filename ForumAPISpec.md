@@ -47,6 +47,8 @@ Response: `[{"id" : Integer, "title" : String, "posts": [Integer]}, ... ]`
 
 ---
 
+# Posts
+
 ## `POST /threads/[thread_id]/posts`
 
 Request Body: `{"message" : String, "user" : Integer}`
