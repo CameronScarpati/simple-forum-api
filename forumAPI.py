@@ -24,11 +24,16 @@ def abortIfThreadIDDoesNotExist(threadID):
     if threadID not in threads:
         abort(404, message="Thread: {} doesn't exist.".format(threadID) + " Please post thread.".format(threadID))
 
-# Allows you to get a specific user using an ID.
+# Allows you to get and delete a specific user using an ID.
 class User(Resource):
     def get(self, userID):
         abortIfUserIDDoesNotExist(userID)
-        return {userID: users[userID]}
+        return {userID: users[userID]} 
+    
+    def delete(self, userID):
+        abortIfUserIDDoesNotExist(userID)
+        del users[userID]
+        return '', 204
 
 # Allows you to get the list of all users and post them as well.
 class UserList(Resource):
@@ -42,11 +47,16 @@ class UserList(Resource):
         users[userID] = {"user": args["user"]}
         return users[userID], 201
 
-# Allows you to get a specific thread using an ID.
+# Allows you to get and delete a specific thread using an ID.
 class Thread(Resource):
     def get(self, threadID):
         abortIfThreadIDDoesNotExist(threadID)
         return {threadID: threads[threadID]}
+    
+    def delete(self, threadID):
+        abortIfThreadIDDoesNotExist(threadID)
+        del threads[threadID]
+        return '', 204
     
 # Allows you to get the list of all threads (and who posted them) as well as post threads. If a user does not exist, that user is posted.
 class ThreadList(Resource):
