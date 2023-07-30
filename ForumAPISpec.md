@@ -33,7 +33,7 @@ Response: thread id (Integer)
 
 NO REQUEST BODY
 
-Response: `{"id" : Integer, "title" : String, "posts" : [Integer]}`
+Response: `{"id" : Integer, "title" : String, "user_id" : Integer, "posts" : [Integer]}`
 
 Errors: 404 (if thread id does not exist)
 
@@ -43,7 +43,7 @@ Note: posts contains a list of post ids
 
 NO REQUEST BODY
 
-Response: `[{"id" : Integer, "title" : String, "posts": [Integer]}, ... ]`
+Response: `[{"id" : Integer, "title" : String, "user_id" : Integer, "posts": [Integer]}, ... ]`
 
 ---
 
@@ -51,7 +51,7 @@ Response: `[{"id" : Integer, "title" : String, "posts": [Integer]}, ... ]`
 
 ## `POST /threads/[thread_id]/posts`
 
-Request Body: `{"message" : String, "user" : Integer}`
+Request Body: `{"message" : String, "user_id" : Integer}`
 
 Response: post id (Integer)
 
