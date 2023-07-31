@@ -97,6 +97,7 @@ def main_menu():
             post_new_post(apiservice, currentuser)
         print("(Enter to continue...)")
         input()
+        print("---\n")
 
 
 def select_user(apiservice: ForumAPIService, currentuser: int) -> int:
@@ -144,9 +145,9 @@ def post_new_thread(apiservice: ForumAPIService, currentuser : int) -> None:
     print("Thread created with id {}".format(new_threadid))
 
 def post_new_post(apiservice : ForumAPIService, currentuser : int) -> None:
-    print("Please enter the thread you want to post to: ")
+    print("Please enter the thread you want to post to: ", end="")
     threadid = int(input())
-    print("Please enter your message: ")
+    print("Please enter your message: ", end="")
     message = input()
     new_postid = apiservice.make_post(threadid, currentuser, message)
     print("Post created with id {}".format(new_postid))

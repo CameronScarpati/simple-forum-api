@@ -75,7 +75,7 @@ class Posts(Resource):
             abort(500, message="This user id does not exist. Please input a valid user id.")
 
         threads[int(thread_id) - 1]["posts"].append(int(id))
-        posts.append({"id" : int(id), "message" : args["message"], "user_id" : args["user"]})
+        posts.append({"id" : int(id), "message" : args["message"], "user_id" : args["user_id"]})
         return int(id), 201
 
 class Post(Resource):
