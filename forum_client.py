@@ -5,7 +5,7 @@
 # - Does not handle errors at all
 # - Currently doesn't allow the creation of new posts
 # - Horrible mess in places
-# - Fetching is handled asynchronously so loading a thread is slow!
+# - Fetching is handled synchronously so loading a thread is slow!
 
 from typing import Dict, List
 
@@ -61,6 +61,8 @@ class ForumAPIService:
     def make_post(self, thread_id: int, user_id: int, message: str) -> int:
         r = requests.post("{}/threads/{}/posts".format(self.url, thread_id),
                           json={"user_id": user_id, "message": message})
+        if r.status_code == 200 or r.status_code == 201:
+            return int(r.content)
 
 
 def main_menu():
@@ -73,9 +75,14 @@ def main_menu():
             print("Currently logged in user: {}".format(user.get("name")))
         else:
             print("Not currently logged in.")
-        print("1. Select user. \n2. Create user. \n3. Show All Threads \n4. Show Thread \n5. Post New Thread")
+        print("1. Select user. \n2. Create user. \n3. Show All Threads "
+              "\n4. Show Thread \n5. Post New Thread\n6. Post New Post")
         print("Command: ", end="")
-        command = int(input())
+        command_text = input()
+        if command_text != "":
+            command = int(command_text)
+        else:
+            continue
         if command == 1:
             currentuser = select_user(apiservice, currentuser)
         elif command == 2:
@@ -86,6 +93,9 @@ def main_menu():
             show_thread(apiservice)
         elif command == 5:
             post_new_thread(apiservice, currentuser)
+        elif command == 6:
+            post_new_post(apiservice, currentuser)
+        print("(Enter to continue...)")
         input()
 
 
@@ -133,6 +143,13 @@ def post_new_thread(apiservice: ForumAPIService, currentuser : int) -> None:
     new_threadid = apiservice.make_thread(currentuser,thread_title)
     print("Thread created with id {}".format(new_threadid))
 
+def post_new_post(apiservice : ForumAPIService, currentuser : int) -> None:
+    print("Please enter the thread you want to post to: ")
+    threadid = int(input())
+    print("Please enter your message: ")
+    message = input()
+    new_postid = apiservice.make_post(threadid, currentuser, message)
+    print("Post created with id {}".format(new_postid))
 
 
 

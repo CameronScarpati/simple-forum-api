@@ -71,7 +71,7 @@ class Posts(Resource):
 
         if int(thread_id) > len(threads):
             abort(404, message="This thread id does not exist. Please input a valid thread id.")
-        if int(args["user"]) > len(users):
+        if int(args["user_id"]) > len(users):
             abort(500, message="This user id does not exist. Please input a valid user id.")
 
         threads[int(thread_id) - 1]["posts"].append(int(id))
