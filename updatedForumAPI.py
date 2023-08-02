@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_restful import reqparse, abort, Api, Resource
+from forumDatabase import *
 
 app = Flask(__name__)
 api = Api(app)
