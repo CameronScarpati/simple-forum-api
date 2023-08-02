@@ -6,21 +6,20 @@ class BaseModel(Model):
     class Meta:
         database = forum_db
 
-class User(BaseModel):
-    id = IntegerField()
-    name = CharField()
+class UserDB(BaseModel):
+    id = AutoField()
+    name = CharField(unique = True)
 
-class Post(BaseModel):
-    id = IntegerField()
+class PostDB(BaseModel):
+    id = AutoField()
     message = TextField()
-    user_id = ForeignKeyField(User, backref = "id")
+    user_id = ForeignKeyField(UserDB, backref = "users")
 
-class Thread(BaseModel):
-    id = IntegerField()
+class ThreadDB(BaseModel):
+    id = AutoField()
     title = CharField()
-    user_id = ForeignKeyField(User, backref = "id")
-    posts = ForeignKeyField(Post)
+    user_id = ForeignKeyField(UserDB, backref = "users")
+    posts = ForeignKeyField(PostDB)
 
 if __name__ == "__main__":
-    forum_db.connect()
-    forum_db.create_tables([User, Post, Thread])
+    pass

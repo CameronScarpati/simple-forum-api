@@ -1,87 +1,108 @@
 from flask import Flask
 from flask_restful import reqparse, abort, Api, Resource
+from forumDatabase import *
 
 app = Flask(__name__)
 api = Api(app)
 
-users = {
-    "user1": {"user": "Cameron James Scarpati"},
-    "user2": {"user": "Charlie Ann Page"},
-}
-threads = {
-    "thread1": {"thread": "Hello World!", "user": "Cameron James Scarpati"}
-}
-
 parser = reqparse.RequestParser()
-parser.add_argument("user")
-parser.add_argument("thread")
+parser.add_argument("name")
+parser.add_argument("title")
+parser.add_argument("user_id")
+parser.add_argument("message")
 
-def abortIfUserIDDoesNotExist(userID):
-    if userID not in users:
-        abort(404, message="User: {} doesn't exist.".format(userID) + " Please post user.".format(userID))
+forum_db.connect()
+forum_db.create_tables([UserDB, PostDB, ThreadDB])
 
-def abortIfThreadIDDoesNotExist(threadID):
-    if threadID not in threads:
-        abort(404, message="Thread: {} doesn't exist.".format(threadID) + " Please post thread.".format(threadID))
+threads = [{"id" : 1, "title" : "New Project Idea", "user_id" : 1, "posts": [1, 2]}]
+posts = [{"id" : 1, "message" : "I could create something that interacts with all of my smart lighting and can be used to match the game I am currently playing.", "user_id" : 1}, 
+         {"id" : 2, "message" : "I could create an in-game overlay for all of my steamgames that helps me more easily track achievements and status as well as easily link guides to solving them if I am stumped.", "user_id" : 2}]
 
-# Allows you to get and delete a specific user using an ID.
-class User(Resource):
-    def get(self, userID):
-        abortIfUserIDDoesNotExist(userID)
-        return {userID: users[userID]} 
-    
-    def delete(self, userID):
-        abortIfUserIDDoesNotExist(userID)
-        del users[userID]
-        return '', 204
-
-# Allows you to get the list of all users and post them as well.
-class UserList(Resource):
+class Users(Resource):
     def get(self):
+        users = []
+        for user in UserDB.select():
+            users.append({"id" : user.id, "name" : user.name})
+
         return users
-    
+
     def post(self):
         args = parser.parse_args()
-        userID = int(max(users.keys()).lstrip("user")) + 1
-        userID = "user%i" % userID
-        users[userID] = {"user": args["user"]}
-        return users[userID], 201
+        id = UserDB.select().count() + 1
 
-# Allows you to get and delete a specific thread using an ID.
-class Thread(Resource):
-    def get(self, threadID):
-        abortIfThreadIDDoesNotExist(threadID)
-        return {threadID: threads[threadID]}
+        try:
+            UserDB.create(id = int(id), name = args["name"])
+        except BaseException:
+            abort(500, message="The username {} has already been taken.".format(args["name"]) + " Please try another.".format(args["name"]))
+
+        return int(id), 201
     
-    def delete(self, threadID):
-        abortIfThreadIDDoesNotExist(threadID)
-        del threads[threadID]
-        return '', 204
-    
-# Allows you to get the list of all threads (and who posted them) as well as post threads. If a user does not exist, that user is posted.
-class ThreadList(Resource):
+class User(Resource):
+    def get(self, id: int):
+        if int(id) > UserDB.select().count():
+            abort(404, message="This user id does not exist. Please input a valid user id.")
+
+        foundUser = UserDB.select().where(UserDB.id == int(id))
+        for user in foundUser:
+            return {"id" : int(id), "name" : user.name}, 200
+
+class Threads(Resource):
     def get(self):
         return threads
     
     def post(self):
         args = parser.parse_args()
-        if users.get(args["user"]) == None:
-            userID = int(max(users.keys()).lstrip("user")) + 1
-            userID = "user%i" % userID
-            users[userID] = {"user": args["user"]}
-            threadID = int(max(threads.keys()).lstrip("thread")) + 1
-            threadID ="thread%i" % threadID
-            threads[threadID] = {"thread": args["thread"], "user": args["user"]}
-            return threads[threadID], 201
-        threadID = int(max(threads.keys()).lstrip("thread")) + 1
-        threadID ="thread%i" % threadID
-        threads[threadID] = {"thread": args["thread"], "user": args["user"]}
-        return threads[threadID], 201
+
+        id = len(threads) + 1
+
+        if int(args["user_id"]) > UserDB.select().count():
+            abort(500, message="This user id does not exist. Please input a valid user id.")
+
+        threads.append({"id" : id, "title" : args["title"], "user_id" : args["user_id"], "posts": []})
+        return int(id), 201
     
-api.add_resource(UserList, "/users")
-api.add_resource(User, "/User/<userID>")
-api.add_resource(ThreadList, "/threads")
-api.add_resource(Thread, "/Thread/<threadID>")
+class Thread(Resource):
+    def get(self, id: int):
+        if int(id) > len(threads):
+            abort(404, message="This thread id does not exist. Please input a valid thread id.")
+        return threads[int(id) - 1], 200
+    
+class Posts(Resource):
+    def get(self, thread_id: int):
+        if int(thread_id) > len(threads):
+            abort(404, message="This thread id does not exist. Please input a valid thread id.")
+        return posts
+    
+    def post(self, thread_id: int):
+        args = parser.parse_args()
+
+        id = len(posts) + 1
+
+        if int(thread_id) > len(threads):
+            abort(404, message="This thread id does not exist. Please input a valid thread id.")
+        if int(args["user_id"]) > UserDB.select().count():
+            abort(500, message="This user id does not exist. Please input a valid user id.")
+
+        threads[int(thread_id) - 1]["posts"].append(int(id))
+        posts.append({"id" : int(id), "message" : args["message"], "user_id" : args["user_id"]})
+        return int(id), 201
+
+class Post(Resource):
+    def get(self, thread_id: int, post_id: int):
+        if int(thread_id) > len(threads):
+            abort(404, message="This thread id does not exist. Please input a valid thread id.")
+        if int(post_id) > len(posts):
+            abort(404, message="This post id does not exist. Please input a valid post id.")
+        if int(post_id) not in threads[int(thread_id) - 1].get("posts"):
+            abort(500, message="This post id is not contained within this thread. Please input a valid post id for this thread or a valid thread id for this post.")
+        return posts[int(post_id) - 1], 200
+
+api.add_resource(Users, "/users")
+api.add_resource(User, "/users/<id>")
+api.add_resource(Threads, "/threads")
+api.add_resource(Thread, "/threads/<id>")
+api.add_resource(Posts, "/threads/<thread_id>/posts")
+api.add_resource(Post, "/threads/<thread_id>/posts/<post_id>")
 
 if __name__ == "__main__":
     app.run(debug=True)
