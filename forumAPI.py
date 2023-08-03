@@ -15,8 +15,6 @@ forum_db.connect()
 forum_db.create_tables([UserDB, PostDB, ThreadDB])
 
 threads = [{"id" : 1, "title" : "New Project Idea", "user_id" : 1, "posts": [1, 2]}]
-posts = [{"id" : 1, "message" : "I could create something that interacts with all of my smart lighting and can be used to match the game I am currently playing.", "user_id" : 1}, 
-         {"id" : 2, "message" : "I could create an in-game overlay for all of my steamgames that helps me more easily track achievements and status as well as easily link guides to solving them if I am stumped.", "user_id" : 2}]
 
 class Users(Resource):
     def get(self):
@@ -43,59 +41,72 @@ class User(Resource):
             abort(404, message="This user id does not exist. Please input a valid user id.")
 
         foundUser = UserDB.select().where(UserDB.id == int(id))
-        for user in foundUser:
-            return {"id" : int(id), "name" : user.name}, 200
+        return {"id" : int(id), "name" : foundUser.name}, 200
 
 class Threads(Resource):
     def get(self):
+        threads = []
+        for thread in ThreadDB.select():
+            threads.append({"id" : thread.id, "title" : thread.title, "user_id" : thread.user_id.id})
+
         return threads
     
     def post(self):
         args = parser.parse_args()
 
-        id = len(threads) + 1
+        id = ThreadDB.select().count() + 1
 
         if int(args["user_id"]) > UserDB.select().count():
             abort(500, message="This user id does not exist. Please input a valid user id.")
 
-        threads.append({"id" : id, "title" : args["title"], "user_id" : args["user_id"], "posts": []})
+        ThreadDB.create(id = int(id), title = args["title"], user_id = args["user_id"])
+
         return int(id), 201
     
 class Thread(Resource):
     def get(self, id: int):
-        if int(id) > len(threads):
+        if int(id) > ThreadDB.select().count():
             abort(404, message="This thread id does not exist. Please input a valid thread id.")
-        return threads[int(id) - 1], 200
+
+        foundThread = ThreadDB.select().where(ThreadDB.id == int(id))
+        return {"id" : int(id), "title" : foundThread.title, "user_id" : foundThread.user_id.id}, 200
     
 class Posts(Resource):
     def get(self, thread_id: int):
-        if int(thread_id) > len(threads):
+        if int(thread_id) > ThreadDB.select().count():
             abort(404, message="This thread id does not exist. Please input a valid thread id.")
+
+        posts = []
+        for post in PostDB.select().where(PostDB.thread_id == thread_id):
+            posts.append({"id" : post.id, "message" : post.message, "user_id" : post.user_id.id})
+
         return posts
     
     def post(self, thread_id: int):
         args = parser.parse_args()
 
-        id = len(posts) + 1
+        id = PostDB.select().count() + 1
 
-        if int(thread_id) > len(threads):
+        if int(thread_id) > ThreadDB.select().count():
             abort(404, message="This thread id does not exist. Please input a valid thread id.")
         if int(args["user_id"]) > UserDB.select().count():
             abort(500, message="This user id does not exist. Please input a valid user id.")
 
-        threads[int(thread_id) - 1]["posts"].append(int(id))
-        posts.append({"id" : int(id), "message" : args["message"], "user_id" : args["user_id"]})
+        PostDB.create(id = int(id), message = args["message"], user_id = args["user_id"], thread_id = int(thread_id))
+
         return int(id), 201
 
 class Post(Resource):
     def get(self, thread_id: int, post_id: int):
-        if int(thread_id) > len(threads):
+        if int(thread_id) > ThreadDB.select().count():
             abort(404, message="This thread id does not exist. Please input a valid thread id.")
-        if int(post_id) > len(posts):
+        if int(post_id) > PostDB.select().count():
             abort(404, message="This post id does not exist. Please input a valid post id.")
-        if int(post_id) not in threads[int(thread_id) - 1].get("posts"):
+        if PostDB.select().where(PostDB.id == int(post_id)).get().thread_id != int(thread_id):
             abort(500, message="This post id is not contained within this thread. Please input a valid post id for this thread or a valid thread id for this post.")
-        return posts[int(post_id) - 1], 200
+
+        foundPost = PostDB.select().where(PostDB.id == int(post_id)).get()
+        return {"id" : int(post_id), "message" : foundPost.message, "user_id" : foundPost.user_id.id}, 200
 
 api.add_resource(Users, "/users")
 api.add_resource(User, "/users/<id>")
