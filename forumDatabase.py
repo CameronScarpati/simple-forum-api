@@ -22,5 +22,4 @@ class PostDB(BaseModel):
     thread_id = ForeignKeyField(ThreadDB, backref = "posts")
 
 if __name__ == "__main__":
-    foundPost = PostDB.select().where(PostDB.id == 1).get()
-    print({"id" : foundPost.id, "message" : foundPost.message, "user_id" : foundPost.user_id.id})
+    pass
